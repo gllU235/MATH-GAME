@@ -1,10 +1,182 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Math Game</title>
+<meta charset="UTF-8">
+<title>Game Toán 11 - AI Quiz</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #eef2ff;
+  text-align: center;
+}
+.box {
+  background: white;
+  width: 90%;
+  max-width: 620px;
+  margin: 30px auto;
+  padding: 20px;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+button {
+  display: block;
+  width: 100%;
+  margin: 8px 0;
+  padding: 12px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: none;
+  background: #4f46e5;
+  color: white;
+}
+button:hover { background: #4338ca; }
+#feedback { font-weight: bold; margin-top: 10px; }
+.top {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+}
+.ai {
+  background: #16a34a;
+}
+.ai:disabled {
+  background: gray;
+}
+</style>
 </head>
+
 <body>
-  <h1>Hello Math Game 🎮</h1>
+<div class="box">
+  <div class="top">
+    <span>⏱️ <span id="time">30</span>s</span>
+    <span>Điểm: <span id="score">0</span></span>
+  </div>
+
+  <h2>🎮 Game Toán 11</h2>
+  <p id="question"></p>
+  <div id="answers"></div>
+
+  <button id="aiBtn" class="ai" onclick="useAI()">🤖 AI gợi ý (1 lần)</button>
+
+  <p id="feedback"></p>
+</div>
+
+<script>
+let score = 0;
+let mainIndex = 0;
+let subIndex = 0;
+let inSub = false;
+let wrongSub = 0;
+let time = 30;
+let timer;
+let aiUsed = false;
+
+const mainQuestions = [
+{ q:"Số nghiệm dương của (1/3)^x = 9 là:", a:["1","2","3","0"], correct:1 },
+{ q:"Nghiệm của 3^(x+1) = (1/9)^(2x) là:", a:["x = -1/5","x = 1/5","x = 1","x = -1"], correct:0 },
+{ q:"Tổng nghiệm của log₃(x²+2)=3 là:", a:["1","3","0","2"], correct:2 },
+{ q:"Số nghiệm dương của ln(x²−6x+7)=ln(x−3) là:", a:["3","0","2","1"], correct:3 },
+{ q:"Số nghiệm của log₁/₃(x²−3x−1)+log₃(2−x)=0 là:", a:["2","1","3","0"], correct:0 }
+];
+
+const subQuestions = [
+{ q:"Tập nghiệm log₂(x²−5x+7)<0 là:", a:["(3;+∞)","(2;3)","(-∞;2)","(-∞;2)∪(3;+∞)"], correct:1 },
+{ q:"Giải log₁/₂(2x−3)<log₁/₂(5−2x). Tính a+b:", a:["11/2","7/2","13/2","9/2"], correct:3 },
+{ q:"log₄(x²−4x)>log₂(8−x) có bao nhiêu nghiệm nguyên?", a:["3","Vô số","2","1"], correct:2 },
+{ q:"Giá trị a^(logₐa²) là:", a:["2ᵃ","a²","2a","2"], correct:1 },
+{ q:"Giá trị log₇(7a) là:", a:["log₇7+log₇a","1+log₇a","log₇a","7log₇a"], correct:1 }
+];
+
+function loadQuestion() {
+ clearInterval(timer);
+ time = 30;
+ document.getElementById("time").innerText = time;
+ timer = setInterval(countDown,1000);
+
+ let q = inSub ? subQuestions[subIndex] : mainQuestions[mainIndex];
+ document.getElementById("question").innerText = q.q;
+ document.getElementById("answers").innerHTML = "";
+ document.getElementById("feedback").innerText = "";
+
+ q.a.forEach((ans,i)=>{
+  let b=document.createElement("button");
+  b.innerText=ans;
+  b.onclick=()=>checkAnswer(i);
+  document.getElementById("answers").appendChild(b);
+ });
+}
+
+function countDown(){
+ time--;
+ document.getElementById("time").innerText=time;
+ if(time<=0){
+  clearInterval(timer);
+  fail();
+ }
+}
+
+function checkAnswer(c){
+ clearInterval(timer);
+ let q=inSub?subQuestions[subIndex]:mainQuestions[mainIndex];
+
+ if(c===q.correct){
+  score+=10;
+  document.getElementById("feedback").innerText="✅ Đúng!";
+  if(inSub){ inSub=false; mainIndex++; }
+  else mainIndex++;
+ } else {
+  document.getElementById("feedback").innerText="❌ Sai!";
+  if(!inSub){ inSub=true; subIndex=mainIndex; }
+  else wrongSub++;
+ }
+
+ document.getElementById("score").innerText=score;
+
+ setTimeout(()=>{
+  if(wrongSub>=2) lose();
+  else if(mainIndex>=mainQuestions.length){
+    score>=40 ? win() : lose();
+  }
+  else loadQuestion();
+ },800);
+}
+
+function fail(){
+ document.getElementById("feedback").innerText="⏰ Hết giờ!";
+ if(!inSub){ inSub=true; subIndex=mainIndex; }
+ else wrongSub++;
+ setTimeout(()=>{
+  wrongSub>=2 ? lose() : loadQuestion();
+ },800);
+}
+
+function useAI(){
+ if(aiUsed) return;
+ aiUsed=true;
+ document.getElementById("aiBtn").disabled=true;
+
+ let q=inSub?subQuestions[subIndex]:mainQuestions[mainIndex];
+ document.getElementById("feedback").innerText=
+ "🤖 Gợi ý: Loại các đáp án không thỏa điều kiện xác định.";
+}
+
+function win(){
+ document.querySelector(".box").innerHTML=`
+ <h1>🎉 CHIẾN THẮNG!</h1>
+ <p>Bạn hoàn thành thử thách Toán 11</p>
+ <p><b>Điểm:</b> ${score}</p>
+ `;
+}
+
+function lose(){
+ document.querySelector(".box").innerHTML=`
+ <h1>💀 THUA RỒI!</h1>
+ <p>Cần ôn lại Logarit nhé 😢</p>
+ <p><b>Điểm:</b> ${score}</p>
+ `;
+}
+
+loadQuestion();
+</script>
 </body>
 </html>
