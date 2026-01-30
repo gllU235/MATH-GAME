@@ -2,101 +2,126 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Game Toán 11 - AI Quiz</title>
+
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #eef2ff;
-  text-align: center;
+body{
+  font-family:"Segoe UI",Arial,sans-serif;
+  background:linear-gradient(135deg,#fbcfe8,#ddd6fe);
+  text-align:center;
+  margin:0;
 }
-.box {
-  background: white;
-  width: 90%;
-  max-width: 620px;
-  margin: 30px auto;
-  padding: 20px;
-  border-radius: 14px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+
+.box{
+  background:white;
+  width:92%;
+  max-width:650px;
+  margin:40px auto;
+  padding:25px;
+  border-radius:20px;
+  box-shadow:0 12px 28px rgba(0,0,0,.18);
 }
-button {
-  display: block;
-  width: 100%;
-  margin: 8px 0;
-  padding: 12px;
-  font-size: 16px;
-  border-radius: 10px;
-  border: none;
-  background: #4f46e5;
-  color: white;
+
+.top{
+  display:flex;
+  justify-content:space-between;
+  font-weight:bold;
+  color:#9333ea;
 }
-button:hover { background: #4338ca; }
-#feedback { font-weight: bold; margin-top: 10px; }
-.top {
-  display: flex;
-  justify-content: space-between;
-  font-weight: bold;
+
+h2{ color:#7e22ce; }
+
+#question{
+  font-size:18px;
+  margin:16px 0;
 }
-.ai {
-  background: #16a34a;
+
+button{
+  display:block;
+  width:100%;
+  margin:10px 0;
+  padding:14px;
+  font-size:16px;
+  border-radius:16px;
+  border:none;
+  cursor:pointer;
+  background:#c084fc;
+  color:white;
+  transition:.2s;
 }
-.ai:disabled {
-  background: gray;
+
+button:hover{
+  background:#a855f7;
+  transform:scale(1.03);
 }
+
+.ai{
+  background:#f472b6;
+}
+
+.ai:hover{ background:#ec4899; }
+
+.ai:disabled{
+  background:gray;
+  cursor:not-allowed;
+}
+
+#feedback{
+  font-weight:bold;
+  font-size:20px;
+  min-height:36px;
+}
+
+.hearts{ font-size:22px; }
 </style>
 </head>
 
 <body>
-<div class="box">
+
+<div class="box" id="game">
   <div class="top">
     <span>⏱️ <span id="time">30</span>s</span>
-    <span>Điểm: <span id="score">0</span></span>
+    <span class="hearts" id="hearts">❤️❤️❤️</span>
   </div>
 
-  <h2>🎮 Game Toán 11</h2>
+  <h2>Game Toán 11 – AI Quiz</h2>
+
   <p id="question"></p>
   <div id="answers"></div>
 
   <button id="aiBtn" class="ai" onclick="useAI()">🤖 AI gợi ý (1 lần)</button>
-
   <p id="feedback"></p>
 </div>
 
 <script>
-let score = 0;
-let mainIndex = 0;
-let subIndex = 0;
-let inSub = false;
-let wrongSub = 0;
-let time = 30;
+let index=0;
+let lives=3;
+let time=30;
 let timer;
-let aiUsed = false;
+let aiUsed=false;
+let score=0;
 
-const mainQuestions = [
-{ q:"Số nghiệm dương của (1/3)^x = 9 là:", a:["1","2","3","0"], correct:1 },
-{ q:"Nghiệm của 3^(x+1) = (1/9)^(2x) là:", a:["x = -1/5","x = 1/5","x = 1","x = -1"], correct:0 },
-{ q:"Tổng nghiệm của log₃(x²+2)=3 là:", a:["1","3","0","2"], correct:2 },
-{ q:"Số nghiệm dương của ln(x²−6x+7)=ln(x−3) là:", a:["3","0","2","1"], correct:3 },
-{ q:"Số nghiệm của log₁/₃(x²−3x−1)+log₃(2−x)=0 là:", a:["2","1","3","0"], correct:0 }
+const questions=[
+{q:"Số nghiệm dương của (1/3)^x = 9 là:",a:["1","2","3","0"],c:1},
+{q:"Nghiệm của 3^(x+1) = (1/9)^(2x) là:",a:["x = -1/5","x = 1/5","x = 1","x = -1"],c:0},
+{q:"Tổng nghiệm của log₃(x²+2)=3 là:",a:["1","3","0","2"],c:2},
+{q:"Số nghiệm dương của ln(x²−6x+7)=ln(x−3) là:",a:["3","0","2","1"],c:3},
+{q:"Số nghiệm của log₁/₃(x²−3x−1)+log₃(2−x)=0 là:",a:["2","1","3","0"],c:0}
 ];
 
-const subQuestions = [
-{ q:"Tập nghiệm log₂(x²−5x+7)<0 là:", a:["(3;+∞)","(2;3)","(-∞;2)","(-∞;2)∪(3;+∞)"], correct:1 },
-{ q:"Giải log₁/₂(2x−3)<log₁/₂(5−2x). Tính a+b:", a:["11/2","7/2","13/2","9/2"], correct:3 },
-{ q:"log₄(x²−4x)>log₂(8−x) có bao nhiêu nghiệm nguyên?", a:["3","Vô số","2","1"], correct:2 },
-{ q:"Giá trị a^(logₐa²) là:", a:["2ᵃ","a²","2a","2"], correct:1 },
-{ q:"Giá trị log₇(7a) là:", a:["log₇7+log₇a","1+log₇a","log₇a","7log₇a"], correct:1 }
-];
+function loadQuestion(){
+ if(index>=questions.length){ win(); return; }
 
-function loadQuestion() {
  clearInterval(timer);
- time = 30;
- document.getElementById("time").innerText = time;
- timer = setInterval(countDown,1000);
+ time=30;
+ document.getElementById("time").innerText=time;
+ timer=setInterval(countDown,1000);
 
- let q = inSub ? subQuestions[subIndex] : mainQuestions[mainIndex];
- document.getElementById("question").innerText = q.q;
- document.getElementById("answers").innerHTML = "";
- document.getElementById("feedback").innerText = "";
+ let q=questions[index];
+ document.getElementById("question").innerText=q.q;
+ document.getElementById("answers").innerHTML="";
+ document.getElementById("feedback").innerText="";
 
  q.a.forEach((ans,i)=>{
   let b=document.createElement("button");
@@ -111,68 +136,54 @@ function countDown(){
  document.getElementById("time").innerText=time;
  if(time<=0){
   clearInterval(timer);
-  fail();
+  loseLife("⏰ Hết giờ!");
  }
+}
+
+function loseLife(msg){
+ lives--;
+ document.getElementById("hearts").innerText="❤️".repeat(lives);
+ document.getElementById("feedback").innerText=msg;
+
+ if(lives<=0) setTimeout(lose,800);
+ else setTimeout(loadQuestion,900);
 }
 
 function checkAnswer(c){
  clearInterval(timer);
- let q=inSub?subQuestions[subIndex]:mainQuestions[mainIndex];
+ let q=questions[index];
 
- if(c===q.correct){
+ if(c===q.c){
   score+=10;
-  document.getElementById("feedback").innerText="✅ Đúng!";
-  if(inSub){ inSub=false; mainIndex++; }
-  else mainIndex++;
- } else {
-  document.getElementById("feedback").innerText="❌ Sai!";
-  if(!inSub){ inSub=true; subIndex=mainIndex; }
-  else wrongSub++;
+  document.getElementById("feedback").innerText="✅ Chính xác!";
+  index++;
+  setTimeout(loadQuestion,900);
+ }else{
+  loseLife("❌ Chưa đúng!");
  }
-
- document.getElementById("score").innerText=score;
-
- setTimeout(()=>{
-  if(wrongSub>=2) lose();
-  else if(mainIndex>=mainQuestions.length){
-    score>=40 ? win() : lose();
-  }
-  else loadQuestion();
- },800);
-}
-
-function fail(){
- document.getElementById("feedback").innerText="⏰ Hết giờ!";
- if(!inSub){ inSub=true; subIndex=mainIndex; }
- else wrongSub++;
- setTimeout(()=>{
-  wrongSub>=2 ? lose() : loadQuestion();
- },800);
 }
 
 function useAI(){
  if(aiUsed) return;
  aiUsed=true;
  document.getElementById("aiBtn").disabled=true;
-
- let q=inSub?subQuestions[subIndex]:mainQuestions[mainIndex];
  document.getElementById("feedback").innerText=
- "🤖 Gợi ý: Loại các đáp án không thỏa điều kiện xác định.";
+ "🤖 Gợi ý: xét điều kiện xác định trước.";
 }
 
 function win(){
- document.querySelector(".box").innerHTML=`
- <h1>🎉 CHIẾN THẮNG!</h1>
- <p>Bạn hoàn thành thử thách Toán 11</p>
- <p><b>Điểm:</b> ${score}</p>
+ document.getElementById("game").innerHTML=`
+  <h1>🎉 HOÀN THÀNH</h1>
+  <p>Bạn đã vượt qua thử thách Toán 11</p>
+  <p><b>Điểm:</b> ${score}</p>
  `;
 }
 
 function lose(){
- document.querySelector(".box").innerHTML=`
- <h1>💀 THUA RỒI!</h1>
- <p>Cần ôn lại Logarit nhé 😢</p>
- <p><b>Điểm:</b> ${score}</p>
+ document.getElementById("game").innerHTML=`
+  <h1>⛔ KẾT THÚC</h1>
+  <p>Cần ôn lại kiến thức Logarit</p>
+  <p><b>Điểm:</b> ${score}</p>
  `;
 }
 
