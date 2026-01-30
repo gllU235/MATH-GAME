@@ -2,6 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Game Toán 11 - AI Cat Quiz</title>
 
 <style>
@@ -75,7 +76,6 @@ button:hover{
 
 .cat{
   font-size:42px;
-  transition:.2s;
 }
 
 .cat.win{ animation:bounce .4s; }
@@ -95,15 +95,13 @@ button:hover{
   100%{transform:translateX(0)}
 }
 
-.hearts{
-  font-size:22px;
-}
+.hearts{ font-size:22px; }
 </style>
 </head>
 
 <body>
 
-<div class="box">
+<div class="box" id="game">
   <div class="top">
     <span>⏱️ <span id="time">30</span>s</span>
     <span class="hearts" id="hearts">❤️❤️❤️</span>
@@ -120,43 +118,35 @@ button:hover{
 </div>
 
 <script>
-let score=0;
-let mainIndex=0;
-let subIndex=0;
-let inSub=false;
-let lives=3;
-let time=30;
+let index = 0;
+let lives = 3;
+let time = 30;
 let timer;
-let aiUsed=false;
+let aiUsed = false;
+let score = 0;
 
-const mainQuestions=[
-{q:"Số nghiệm dương của (1/3)^x = 9 là:",a:["1","2","3","0"],correct:1},
-{q:"Nghiệm của 3^(x+1) = (1/9)^(2x) là:",a:["x = -1/5","x = 1/5","x = 1","x = -1"],correct:0},
-{q:"Tổng nghiệm của log₃(x²+2)=3 là:",a:["1","3","0","2"],correct:2},
-{q:"Số nghiệm dương của ln(x²−6x+7)=ln(x−3) là:",a:["3","0","2","1"],correct:3},
-{q:"Số nghiệm của log₁/₃(x²−3x−1)+log₃(2−x)=0 là:",a:["2","1","3","0"],correct:0}
-];
-
-const subQuestions=[
-{q:"Tập nghiệm log₂(x²−5x+7)<0 là:",a:["(3;+∞)","(2;3)","(-∞;2)","(-∞;2)∪(3;+∞)"],correct:1},
-{q:"Giải log₁/₂(2x−3)<log₁/₂(5−2x). Tính a+b:",a:["11/2","7/2","13/2","9/2"],correct:3},
-{q:"log₄(x²−4x)>log₂(8−x) có bao nhiêu nghiệm nguyên?",a:["3","Vô số","2","1"],correct:2},
-{q:"Giá trị a^(logₐa²) là:",a:["2ᵃ","a²","2a","2"],correct:1},
-{q:"Giá trị log₇(7a) là:",a:["log₇7+log₇a","1+log₇a","log₇a","7log₇a"],correct:1}
+const questions = [
+{q:"Số nghiệm dương của (1/3)^x = 9 là:",a:["1","2","3","0"],c:1},
+{q:"Nghiệm của 3^(x+1) = (1/9)^(2x) là:",a:["x = -1/5","x = 1/5","x = 1","x = -1"],c:0},
+{q:"Tổng nghiệm của log₃(x²+2)=3 là:",a:["1","3","0","2"],c:2},
+{q:"Số nghiệm dương của ln(x²−6x+7)=ln(x−3) là:",a:["3","0","2","1"],c:3},
+{q:"Số nghiệm của log₁/₃(x²−3x−1)+log₃(2−x)=0 là:",a:["2","1","3","0"],c:0}
 ];
 
 function loadQuestion(){
- clearInterval(timer);
- time=30;
- document.getElementById("time").innerText=time;
- timer=setInterval(countDown,1000);
+ if(index >= questions.length){ win(); return; }
 
- let q=inSub?subQuestions[subIndex]:mainQuestions[mainIndex];
- document.getElementById("question").innerText=q.q;
- document.getElementById("answers").innerHTML="";
- document.getElementById("feedback").innerText="";
- document.getElementById("cat").innerText="🐱";
- document.getElementById("cat").className="cat";
+ clearInterval(timer);
+ time = 30;
+ document.getElementById("time").innerText = time;
+ timer = setInterval(countDown,1000);
+
+ let q = questions[index];
+ document.getElementById("question").innerText = q.q;
+ document.getElementById("answers").innerHTML = "";
+ document.getElementById("feedback").innerText = "";
+ document.getElementById("cat").innerText = "🐱";
+ document.getElementById("cat").className = "cat";
 
  q.a.forEach((ans,i)=>{
   let b=document.createElement("button");
@@ -189,16 +179,15 @@ function loseLife(msg){
 
 function checkAnswer(c){
  clearInterval(timer);
- let q=inSub?subQuestions[subIndex]:mainQuestions[mainIndex];
+ let q=questions[index];
 
- if(c===q.correct){
+ if(c===q.c){
   score+=10;
   let cat=document.getElementById("cat");
   cat.innerText="😸✨";
   cat.classList.add("win");
   document.getElementById("feedback").innerText="Đúng rồi nèee!";
-  inSub=false;
-  mainIndex++;
+  index++;
   setTimeout(loadQuestion,900);
  }else{
   loseLife("Sai rồi mèo buồn 😢");
@@ -213,11 +202,20 @@ function useAI(){
  "🤖🐱 Gợi ý: xét điều kiện xác định trước nha!";
 }
 
+function win(){
+ document.getElementById("game").innerHTML=`
+  <h1>🎉 MÈO CHIẾN THẮNG</h1>
+  <div class="cat">😻🏆</div>
+  <p>Bạn đã hoàn thành game Toán 11</p>
+  <p><b>Điểm:</b> ${score}</p>
+ `;
+}
+
 function lose(){
- document.querySelector(".box").innerHTML=`
- <h1>😿 MÈO HẾT TIM</h1>
- <p>Cần ôn lại Logarit nhé!</p>
- <p><b>Điểm:</b> ${score}</p>
+ document.getElementById("game").innerHTML=`
+  <h1>😿 MÈO HẾT TIM</h1>
+  <p>Ôn lại Logarit rồi quay lại nhé!</p>
+  <p><b>Điểm:</b> ${score}</p>
  `;
 }
 
